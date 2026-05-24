@@ -1,6 +1,6 @@
 # ai-cli
 
-Tiny command-line launcher for starting local AI coding agents in YOLO mode.
+Launch Claude Code or Codex in YOLO mode from one command.
 
 The installed command is `ai`. It starts Claude Code or Codex with their
 full-permission flags, then passes all remaining arguments through unchanged.

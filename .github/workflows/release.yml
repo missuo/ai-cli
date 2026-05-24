@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'go.work'
+      - 'go.work.sum'
+      - '.github/workflows/release.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'go.work'
+      - 'go.work.sum'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.goos }}/${{ matrix.goarch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux,   goarch: amd64, ext: ''     }
+          - { goos: linux,   goarch: arm64, ext: ''     }
+          - { goos: linux,   goarch: 386,   ext: ''     }
+          - { goos: darwin,  goarch: amd64, ext: ''     }
+          - { goos: darwin,  goarch: arm64, ext: ''     }
+          - { goos: windows, goarch: amd64, ext: '.exe' }
+          - { goos: windows, goarch: arm64, ext: '.exe' }
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      CGO_ENABLED: 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build ai
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          suffix="${{ matrix.goos }}-${{ matrix.goarch }}"
+          ldflags="-s -w -X main.version=${{ steps.ver.outputs.version }}"
+          go build -trimpath -ldflags="$ldflags" -o "dist/ai-${suffix}${{ matrix.ext }}" .
+          ls -la dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - run: go vet ./...
+      - run: go test -race ./...
+
+  release:
+    name: Release
+    needs: [build, test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la artifacts/
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/ai-*
+          generate_release_notes: true
+          fail_on_unmatched_files: true

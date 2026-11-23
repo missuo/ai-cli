@@ -1,9 +1,10 @@
 # ai-cli
 
-Launch Claude Code, Codex, or Grok in YOLO mode from one command.
+Launch Claude Code, Codex, Grok, or Antigravity in YOLO mode from one command.
 
-The installed command is `ai`. It starts Claude Code, Codex, or Grok with their
-full-permission flags, then passes all remaining arguments through unchanged.
+The installed command is `ai`. It starts Claude Code, Codex, Grok, or
+Antigravity (`agy`) with their full-permission flags, then passes all remaining
+arguments through unchanged.
 
 Use it only in directories where you are comfortable running the selected agent
 with broad filesystem and command permissions.
@@ -15,6 +16,7 @@ ai
 ai claude --resume
 ai codex resume
 ai grok -c
+ai agy
 ai --resume
 ```
 
@@ -25,6 +27,7 @@ Select AI agent:
   1) Claude
   2) Codex
   3) Grok
+  4) Antigravity
 >
 ```
 
@@ -33,13 +36,14 @@ Injected arguments:
 - Claude: `--dangerously-skip-permissions`
 - Codex: `--dangerously-bypass-approvals-and-sandbox`
 - Grok: `--always-approve`
+- Antigravity: `--dangerously-skip-permissions`
 
-When the first argument is `claude`, `codex`, `grok`, `c`, `x`, or `g`, `ai`
-skips the prompt. Otherwise, it prompts first and forwards every argument to
-the selected command.
+When the first argument is `claude`, `codex`, `grok`, `agy`, `antigravity`,
+`c`, `x`, or `g`, `ai` skips the prompt. Otherwise, it prompts first and
+forwards every argument to the selected command.
 
 That means you can pass the same arguments you would normally pass to Claude,
-Codex, or Grok:
+Codex, Grok, or Antigravity:
 
 ```sh
 ai claude --resume
@@ -49,8 +53,8 @@ ai --resume
 ai --continue
 ```
 
-For example, `ai --resume` prompts for Claude, Codex, or Grok, then runs the
-selected agent with its YOLO flag plus `--resume`.
+For example, `ai --resume` prompts for Claude, Codex, Grok, or Antigravity,
+then runs the selected agent with its YOLO flag plus `--resume`.
 
 ## Build
 

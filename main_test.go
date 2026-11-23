@@ -63,14 +63,26 @@ func TestBuildArgvGrok(t *testing.T) {
 	}
 }
 
+func TestBuildArgvAgy(t *testing.T) {
+	got := buildArgv(providers["agy"], []string{"--resume"})
+	want := []string{"agy", "--dangerously-skip-permissions", "--resume"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("argv = %#v, want %#v", got, want)
+	}
+}
+
 func TestProviderAliases(t *testing.T) {
 	cases := map[string]string{
-		"c":      "claude",
-		"Claude": "claude",
-		"x":      "codex",
-		"Codex":  "codex",
-		"g":      "grok",
-		"Grok":   "grok",
+		"c":           "claude",
+		"Claude":      "claude",
+		"x":           "codex",
+		"Codex":       "codex",
+		"g":           "grok",
+		"Grok":        "grok",
+		"agy":         "agy",
+		"AGY":         "agy",
+		"antigravity": "agy",
 	}
 
 	for input, want := range cases {
@@ -85,6 +97,9 @@ func TestSelectionAliases(t *testing.T) {
 		"1":      "claude",
 		"2":      "codex",
 		"3":      "grok",
+		"4":      "agy",
+		"5":      "",
+		"0":      "",
 		" c \n":  "claude",
 		" Codex": "codex",
 		" g ":    "grok",

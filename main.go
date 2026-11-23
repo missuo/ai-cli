@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -17,7 +18,7 @@ type provider struct {
 	extraArgs []string
 }
 
-var providerOrder = []string{"claude", "codex", "grok"}
+var providerOrder = []string{"claude", "codex", "grok", "agy"}
 
 var providers = map[string]provider{
 	"claude": {
@@ -34,6 +35,11 @@ var providers = map[string]provider{
 		name:      "Grok",
 		command:   "grok",
 		extraArgs: []string{"--always-approve"},
+	},
+	"agy": {
+		name:      "Antigravity",
+		command:   "agy",
+		extraArgs: []string{"--dangerously-skip-permissions"},
 	},
 }
 
@@ -93,22 +99,22 @@ func normalizeProvider(value string) string {
 		return "codex"
 	case "grok", "g":
 		return "grok"
+	case "agy", "antigravity":
+		return "agy"
 	default:
 		return ""
 	}
 }
 
 func normalizeSelection(value string) string {
-	switch strings.ToLower(strings.TrimSpace(value)) {
-	case "1":
-		return "claude"
-	case "2":
-		return "codex"
-	case "3":
-		return "grok"
-	default:
-		return normalizeProvider(value)
+	trimmed := strings.TrimSpace(value)
+	if idx, err := strconv.Atoi(trimmed); err == nil {
+		if idx >= 1 && idx <= len(providerOrder) {
+			return providerOrder[idx-1]
+		}
+		return ""
 	}
+	return normalizeProvider(trimmed)
 }
 
 func promptProvider(in *os.File, errOut *os.File) (string, error) {
@@ -137,7 +143,7 @@ func promptProvider(in *os.File, errOut *os.File) (string, error) {
 
 		name := normalizeSelection(raw)
 		if name == "" {
-			fmt.Fprintln(errOut, "Please choose 1/claude, 2/codex, or 3/grok.")
+			fmt.Fprintln(errOut, "Please choose 1/claude, 2/codex, 3/grok, or 4/agy.")
 			continue
 		}
 
@@ -179,7 +185,7 @@ func missingProviderError(p provider) error {
 }
 
 func missingAllProvidersError() error {
-	return errors.New("no supported AI agent was found in PATH. Install Claude Code (`claude`), Codex (`codex`), or Grok (`grok`) and try again")
+	return errors.New("no supported AI agent was found in PATH. Install Claude Code (`claude`), Codex (`codex`), Grok (`grok`), or Antigravity (`agy`) and try again")
 }
 
 func buildArgv(p provider, passThroughArgs []string) []string {
@@ -222,6 +228,7 @@ func printHelp(errOut *os.File) {
   ai claude [args...]
   ai codex [args...]
   ai grok [args...]
+  ai agy [args...]
   ai [args...]
 
 Examples:
@@ -229,13 +236,15 @@ Examples:
   ai claude --resume
   ai codex resume
   ai grok -c
+  ai agy
   ai --resume
 
-When no provider is supplied, ai prompts for Claude, Codex, or Grok, then
-passes every remaining argument to the selected command.
+When no provider is supplied, ai prompts for Claude, Codex, Grok, or
+Antigravity, then passes every remaining argument to the selected command.
 
 Injected arguments:
-  Claude: --dangerously-skip-permissions
-  Codex:  --dangerously-bypass-approvals-and-sandbox
-  Grok:   --always-approve`)
+  Claude:      --dangerously-skip-permissions
+  Codex:       --dangerously-bypass-approvals-and-sandbox
+  Grok:        --always-approve
+  Antigravity: --dangerously-skip-permissions`)
 }
